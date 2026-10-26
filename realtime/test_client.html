@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>STRUCTVISION Live Stream Test</title>
+    <style>
+        body { font-family: monospace; background: #18181b; color: #4ade80; padding: 24px; }
+        h2 { color: #f4f4f5; margin-bottom: 8px; }
+        #status { font-weight: bold; }
+        #log { background: #09090b; border: 1px solid #27272a; border-radius: 6px; padding: 12px; height: 380px; overflow-y: auto; font-size: 13px; }
+        .alert { color: #f87171; font-weight: bold; }
+        .clear { color: #4ade80; }
+        .meta { color: #a1a1aa; }
+    </style>
+</head>
+<body>
+    <h2>STRUCTVISION Live Telemetry Stream Test</h2>
+    <p class="meta">WebSocket Target: <code>ws://127.0.0.1:8000/ws/live-flight</code></p>
+    <p>Status: <span id="status" style="color: #facc15;">Connecting...</span></p>
+    <div id="log"></div>
+
+    <script>
+        const ws = new WebSocket("ws://127.0.0.1:8000/ws/live-flight");
+        const statusEl = document.getElementById("status");
+        const logEl = document.getElementById("log");
+
+        ws.onopen = () => {
+            statusEl.innerText = "CONNECTED (Receiving ~2 FPS Telemetry)";
+            statusEl.style.color = "#4ade80";
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const entry = document.createElement("div");
+            entry.style.marginBottom = "6px";
+            
+            const timestamp = new Date(data.timestamp * 1000).toLocaleTimeString();
+            const tag = data.num_cracks > 0 
+                ? `<span class="alert">[DAMAGE ALERT] ${data.num_cracks} Crack(s) Detected</span>` 
+                : `<span class="clear">[NOMINAL] No Structural Anomalies</span>`;
+            
+            entry.innerHTML = `<span class="meta">[${timestamp}]</span> ${tag} | Confidence Points: ${data.detections.map(d => d.confidence).join(", ") || "N/A"}`;
+            
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        };
+
+        ws.onclose = () => {
+            statusEl.innerText = "DISCONNECTED";
+            statusEl.style.color = "#f87171";
+        };
+
+        ws.onerror = (err) => {
+            statusEl.innerText = "ERROR - Check Uvicorn Server";
+            statusEl.style.color = "#f87171";
+        };
+    </script>
+</body>
+</html>

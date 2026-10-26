@@ -1,0 +1,13 @@
+ultralytics==8.3.*
+opencv-python
+numpy
+pillow
+shapely
+pyvista
+openseespy
+fastapi
+uvicorn[standard]
+python-multipart
+websockets
+reportlab
+PyExifTool
